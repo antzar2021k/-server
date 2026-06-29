@@ -49,15 +49,13 @@ def set_cd_offset(eocd, offset):
 def content_digest(sections):
     chunk_digests = []
     for section in sections:
-        pos = 0
-        while pos < len(section):
+        for pos in range(0, len(section), CHUNK_SIZE):
             chunk = section[pos : pos + CHUNK_SIZE]
             h = hashlib.sha256()
             h.update(b"\xa5")
             h.update(le32(len(chunk)))
             h.update(chunk)
             chunk_digests.append(h.digest())
-            pos += CHUNK_SIZE
 
     h = hashlib.sha256()
     h.update(b"\x5a")
@@ -71,8 +69,12 @@ def make_cert_and_key():
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name(
         [
-            x509.NameAttribute(NameOID.COMMON_NAME, "Android Debug"),
+            x509.NameAttribute(NameOID.EMAIL_ADDRESS, "android@android.com"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "Android"),
+            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Android"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Android"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Mountain View"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
             x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
         ]
     )
@@ -103,7 +105,12 @@ def make_v2_block(digest, key, cert_der):
     signatures = lp(sig_record)
 
     signer = lp(signed_data) + signatures + lp(public_key_der)
-    v2_value = lp(signer)
+
+    # APK Signature Scheme v2 pair value is a length-prefixed sequence of
+    # length-prefixed signer blocks. The previous implementation missed the
+    # outer sequence length, which made Android report the APK as damaged.
+    signers_sequence = lp(signer)
+    v2_value = lp(signers_sequence)
 
     pair = le64(4 + len(v2_value)) + le32(V2_ID) + v2_value
     size = len(pair) + 24
