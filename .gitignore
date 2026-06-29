@@ -1,0 +1,37 @@
+# Secrets
+scriptfiles/redex_mysql_settings.ini
+server.cfg
+*.key
+*.jks
+*.keystore
+.env
+
+# Backups / dumps
+backup_database/*.sql
+backup_database/*.sql.gz
+*.sql
+*.sql.gz
+*.tar
+*.tar.gz
+*.zip
+
+# Logs / runtime
+*.log
+server_log.txt
+mysql_log.txt
+svlog.txt
+logs/
+samp.ban
+crashinfo.txt
+crashinfo_*.txt
+
+# Binaries from hosting backup
+samp03svr
+samp-npc
+announce
+plugins/*.so
+plugins/*.dll
+plugins/*.pdb
+plugins/static/*.so
+pawno/*.exe
+pawno/*.dll
